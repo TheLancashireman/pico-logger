@@ -21,7 +21,11 @@ SERVER_DIR = /data2/mirror/experimental.thelancashireman.org/weather
 
 .PHONY:	install
 
-install:	$(SERVER_DIR)/wlog.py $(SERVER_DIR)/weather.py
+SERVER_FILES += $(SERVER_DIR)/index.html
+SERVER_FILES += $(SERVER_DIR)/wlog.py
+SERVER_FILES += $(SERVER_DIR)/weather.py
+
+install:	$(SERVER_FILES)
 
 $(SERVER_DIR)/%:	%
 	cp $* $@
