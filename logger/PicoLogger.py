@@ -18,19 +18,17 @@
 # along with pico-logger.  If not, see <http://www.gnu.org/licenses/>.
 
 from Config import Config
+from Network import Network
 
 from machine import ADC, Pin, Timer
 import time
-import network
-import socket
-import struct
 
 class PicoLogger():
 	# The constructor connects to the network, gets the time and configures the hardware
 	#
 	def __init__(self):
-		self.ConnectToWlan(Config.WLAN_SSID, Config.WLAN_PASSWD)
-		self.SetTime()
+		Network.ConnectToWlan()
+		Network.NtpSetTime()
 		self.led = Pin("LED", Pin.OUT)
 		self.led.off()
 		self.time_counter = 0
@@ -64,7 +62,7 @@ class PicoLogger():
 				self.time_counter = 0
 		return
 
-	# Blink the LED. On for 20ms (one iteration) per 5 secs (250 iterations
+	# Blink the LED. On for 20ms (one iteration) per 5 secs (250 iterations)
 	#
 	def BlinkerTask(self):
 		t = self.time_counter % 250
@@ -78,7 +76,7 @@ class PicoLogger():
 	#
 	def NtpTask(self):
 		if self.time_counter == 350:
-			self.SetTime()
+			Network.NtpSetTime()
 		return
 
 	# Print the status every minute at 3 seconds offset
@@ -128,34 +126,3 @@ class PicoLogger():
 		a = adc.read_u16()
 		t10 = 4372 - a * 292586 // 1000000
 		return t10
-
-	# Set the time from an NTP server
-	#
-	def SetTime(self):
-		ntp_query = bytearray(48)
-		ntp_query[0] = 0x1B
-		addr = socket.getaddrinfo(Config.NTP_SERVER, 123)[0][-1]
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		try:
-			s.settimeout(1)
-			res = s.sendto(ntp_query, addr)
-			msg = s.recv(48)
-		finally:
-			s.close()
-		val = struct.unpack("!I", msg[40:44])[0]
-		t = val - Config.NTP_DELTA	
-		tm = time.gmtime(t)
-		machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
-		return
-
-	# Connect to WLAN
-	#
-	def ConnectToWlan(self, ssid, passwd):
-		print('Connecting to WLAN ...')
-		wlan = network.WLAN(network.STA_IF)
-		wlan.active(True)
-		wlan.connect(ssid, passwd)
-		while not wlan.isconnected():
-			pass
-		print('... Connected')
-		return
