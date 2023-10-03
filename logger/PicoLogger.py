@@ -19,6 +19,7 @@
 
 from Config import Config
 from Network import Network
+from Sensors import Sensors
 
 from machine import ADC, Pin, Timer
 import time
@@ -32,7 +33,6 @@ class PicoLogger():
 		self.led = Pin("LED", Pin.OUT)
 		self.led.off()
 		self.time_counter = 0
-		self.sensor = {}
 		return
 
 	# The main loop. One iteration lasts on average 20 ms. If less, a delay is introduced. If more,
@@ -84,45 +84,20 @@ class PicoLogger():
 	def PrintTask(self):
 		if (self.time_counter % 3000) == 150:
 			t = time.localtime(time.time()+7200)
-			temp = self.GetSensor('T_int', 9999)
-			print('%04d-%02d-%02d %02d:%02d:%02d %d.%d C' % (t[0], t[1], t[2], t[3], t[4], t[5], temp//10, temp%10))
+			temp = Sensors.GetValue('T_int', 9999)
+			if temp < 0:
+				s = '-'
+				temp = -temp
+			else:
+				s = ''
+			ti = temp//10
+			td = temp%10
+			print('%04d-%02d-%02d %02d:%02d:%02d %s%d.%d C' % (t[0], t[1], t[2], t[3], t[4], t[5], s, ti, td))
 		return
 
 	# Read the internal temperature every minute at 2 seconds offset
 	#
 	def InternalTemperatureTask(self):
 		if (self.time_counter % 3000) == 100:
-			self.sensor['T_int'] = self.ReadInternalTemperature()
+			Sensors.LogValue('T_int', Sensors.ReadInternalTemperature())
 		return
-
-	# Get a sensor value, or the given default if no value recorded yet
-	#
-	def GetSensor(self, sensor, dflt):
-		try:
-			return self.sensor[sensor]
-		except:
-			pass
-		return dflt
-
-	# Read the internal temperature sensor and return the value in tenths of a degree C
-	#
-	# From RP2040 datasheet:
-	# The temperature sensor measures the Vbe voltage of a biased bipolar diode, connected to the fifth ADC channel
-	# (AINSEL=4). Typically, Vbe = 0.706V at 27 degrees C, with a slope of -1.721mV per degree.
-	#
-	# v = a * 3.3 / 65536
-	# t = 27 - (v - 0.706)/0.001721
-	#
-	# ==> t = 27 + 410.226612434631 - v * 581.057524694944
-	# ==> t = 437.226612434631 - a * 3.3 * 581.057524694944 / 65536
-	# ==> t = 437.226612434631 - a * 0.029258572868
-	# Multiply by 10 to get t10 in tenths of a degree:
-	# ==> t10 = 4372.26612434631 - a * 0.29258572868
-	# Convert to integer arithmetic:
-	# ==> t10 = 4372 - a * 292586 / 1000000
-	#
-	def ReadInternalTemperature(self):
-		adc = machine.ADC(4)
-		a = adc.read_u16()
-		t10 = 4372 - a * 292586 // 1000000
-		return t10

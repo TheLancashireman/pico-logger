@@ -8,6 +8,7 @@
 #
 cat	Config.py      Blank.txt \
 	Network.py     Blank.txt \
+	Sensors.py     Blank.txt \
 	PicoLogger.py  Blank.txt \
 	main.py        Blank.txt | egrep -v '^import|^from' > tmprun1.py
 

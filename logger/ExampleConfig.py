@@ -32,3 +32,6 @@ class Config():
 	# Logger server
 	LOG_SERVER	= 'https://example.com/path/to/wlog.py'
 	LOG_ID		= 'user=EXAMPLE&pass=SECRET&from=pico'
+
+	# Max age (in seconds) for sensor values
+	SENSOR_AGE	= 300
