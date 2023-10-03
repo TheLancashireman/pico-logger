@@ -57,6 +57,8 @@ class Sensor():
 class Sensors():
 	sensors = {}
 
+	# Log a single measured value. Create a sensor instance if not already present
+	#
 	@staticmethod
 	def LogValue(name, value):
 		try:
@@ -68,6 +70,9 @@ class Sensors():
 		s.NewValue(value)
 		return
 
+	# Get the most recent value of a sensor
+	# ToDo: handling of stale values?
+	#
 	@staticmethod
 	def GetValue(name, dflt = None):
 		try:
@@ -75,6 +80,17 @@ class Sensors():
 		except:
 			return dflt
 		return s.current
+
+	# Get the values of all sensors as strings
+	# Returns an array of elements of the form 'name=value'
+	#
+	@staticmethod
+	def GetAllValues():
+		l = []
+		for name in Sensors.sensors:
+			v = Sensors.GetValue(name)
+			l.append(name+'='+str(v))
+		return l
 
 	# Read the internal temperature sensor and return the value in tenths of a degree C
 	#

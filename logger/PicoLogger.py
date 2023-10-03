@@ -28,6 +28,7 @@ class PicoLogger():
 	# The constructor connects to the network, gets the time and configures the hardware
 	#
 	def __init__(self):
+		self.tzoffset = 7200
 		Network.ConnectToWlan()
 		Network.NtpSetTime()
 		self.led = Pin("LED", Pin.OUT)
@@ -47,6 +48,7 @@ class PicoLogger():
 			self.NtpTask()
 			self.InternalTemperatureTask()
 			self.PrintTask()
+			self.LogTask()
 
 			# This code should give a loop period of 20 ms regardless of how much processing is done
 			# in the loop ... up to a point.
@@ -83,8 +85,8 @@ class PicoLogger():
 	#
 	def PrintTask(self):
 		if (self.time_counter % 3000) == 150:
-			t = time.localtime(time.time()+7200)
-			temp = Sensors.GetValue('T_int', 9999)
+			t = time.localtime(time.time()+self.tzoffset)
+			temp = Sensors.GetValue('T_pico', 9999)
 			if temp < 0:
 				s = '-'
 				temp = -temp
@@ -99,5 +101,16 @@ class PicoLogger():
 	#
 	def InternalTemperatureTask(self):
 		if (self.time_counter % 3000) == 100:
-			Sensors.LogValue('T_int', Sensors.ReadInternalTemperature())
+			Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
+		return
+
+	# Log the status every 5 minutes at 100 milliseconds offset
+	#
+	def LogTask(self):
+		if (self.time_counter % 15000) == 5:
+			t = time.localtime(time.time()+self.tzoffset)
+			before = time.ticks_ms()
+			ans = Network.PostToServer(t)
+			print ('Execution time for PostToServer():', time.ticks_diff(time.ticks_ms(), before))
+			print('Server says', ans)
 		return
