@@ -46,9 +46,9 @@ class PicoLogger():
 		while True:
 			self.BlinkerTask()
 			self.NtpTask()
+			self.LogTask()
 			self.InternalTemperatureTask()
 			self.PrintTask()
-			self.LogTask()
 
 			# This code should give a loop period of 20 ms regardless of how much processing is done
 			# in the loop ... up to a point.
@@ -64,27 +64,29 @@ class PicoLogger():
 				self.time_counter = 0
 		return
 
-	# Blink the LED. On for 20ms (one iteration) per 5 secs (250 iterations)
+	# Blink the LED.
 	#
 	def BlinkerTask(self):
-		t = self.time_counter % 250
-		if t == 0:
+		t = self.time_counter % Config.PER_LED
+		if t == Config.OFF_LED_ON:
 			self.led.on()
-		elif t == 1:
+		elif t == Config.OFF_LED_OFF:
 			self.led.off()
 		return
 
-	# Set the time from an NTP server. Every hour at 7 seconds past
+	# Set the time from an NTP server.
 	#
 	def NtpTask(self):
-		if self.time_counter == 350:
+		if (self.time_counter % Config.PER_NTP) == Config.OFF_NTP:
+			print('NtpTask')
 			Network.NtpSetTime()
 		return
 
-	# Print the status every minute at 3 seconds offset
+	# Print the status
 	#
 	def PrintTask(self):
-		if (self.time_counter % 3000) == 150:
+		if (self.time_counter % Config.PER_PRINT) == Config.OFF_PRINT:
+			print('PrintTask')
 			t = time.localtime(time.time()+self.tzoffset)
 			temp = Sensors.GetValue('T_pico', 9999)
 			if temp < 0:
@@ -97,21 +99,21 @@ class PicoLogger():
 			print('%04d-%02d-%02d %02d:%02d:%02d %s%d.%d C' % (t[0], t[1], t[2], t[3], t[4], t[5], s, ti, td))
 		return
 
-	# Read the internal temperature every minute at 2 seconds offset
+	# Read the internal temperature
 	#
 	def InternalTemperatureTask(self):
-		if (self.time_counter % 3000) == 100:
+		if (self.time_counter % Config.PER_TPICO) == Config.OFF_TPICO:
+			print('InternalTemperatureTask')
 			Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
 		return
 
-	# Log the status every 5 minutes at 100 milliseconds offset
+	# Post the status to the remote server
 	#
 	def LogTask(self):
-		if (self.time_counter % 15000) == 5:
+		if (self.time_counter % Config.PER_POST) == Config.OFF_POST:
+			print('LogTask')
 			t = time.localtime(time.time()+self.tzoffset)
-			before = time.ticks_ms()
 			ans = Network.PostToServer(t)
-			print ('Execution time for PostToServer():', time.ticks_diff(time.ticks_ms(), before))
 			if ans.strip() != 'OK':
 				print('Server responss:')
 				print(ans)
