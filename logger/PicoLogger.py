@@ -112,5 +112,7 @@ class PicoLogger():
 			before = time.ticks_ms()
 			ans = Network.PostToServer(t)
 			print ('Execution time for PostToServer():', time.ticks_diff(time.ticks_ms(), before))
-			print('Server says', ans)
+			if ans.strip() != 'OK':
+				print('Server responss:')
+				print(ans)
 		return
