@@ -46,10 +46,6 @@ Some experiments using both cores have been performed; see notes at end of this 
 ## CAVEAT: This project is in the early development stages.
 If you're looking for a ready-to-run project please look elsewhere.
 
-## License
-
-GPL v3 or later.  See the LICENSE file
-
 ## Experimental notes
 
 These dual-core experiments were performed in small test programs.
