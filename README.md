@@ -1,10 +1,19 @@
-# Weather station
+# Pico logger
 
-This is the firmware for a weather station. The design uses various remote sensors communicating
-over serial lines, RF etc. to gather information.
+This repository contains the parts of a data logger suite.
 
-The plan is to log the data to flash memory (SD card, etc.) and dump it to a PC for offline
-analysis.
+The data logger itself is based on a Raspberry Pico running Micropython. Data is gathered
+from various sources - local sensors, asynchronous serial input from remote sensors, RF etc.
+The data will be stored locally and sent over an internet connection to a remote server.
+For internet use, a Pico-W is needed.
+
+Subdirectories:
+
+* logger/ - the Pico/Pico-W firmware
+* server/ - the server-side scripts
+* host/ - download and offline storage on a host PC (to do)
+
+See the README.md files in the individual subdirectories for further details.
 
 Possible sensors:
 
@@ -23,15 +32,8 @@ The remote sensors will use various AVR devices - mostly ATtiny.
 
 The remote sensors are in separate repositories.
 
-## Additional software
-
-## Design (short version)
-
-* On-board LED is used as an alive indicator. Blinks for 20 ms every 2s.
-* USB is the console - used for communicating with PC.
-* Uart1 is used for receiving messages from the serial remote sensors.
-
-## CAVEAT: This project is under development. If you're looking for a ready-to-run project please look elsewhere.
+## CAVEAT: This project is in the early development stages.
+If you're looking for a ready-to-run project please look elsewhere.
 
 ## License
 
