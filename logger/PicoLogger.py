@@ -23,6 +23,7 @@ from Sensors import Sensors
 
 from machine import ADC, Pin, Timer
 import time
+import micropython
 
 class PicoLogger():
 	# The constructor connects to the network, gets the time and configures the hardware
@@ -89,14 +90,9 @@ class PicoLogger():
 			print('PrintTask')
 			t = time.localtime(time.time()+self.tzoffset)
 			temp = Sensors.GetValue('T_pico', 9999)
-			if temp < 0:
-				s = '-'
-				temp = -temp
-			else:
-				s = ''
-			ti = temp//10
-			td = temp%10
-			print('%04d-%02d-%02d %02d:%02d:%02d %s%d.%d C' % (t[0], t[1], t[2], t[3], t[4], t[5], s, ti, td))
+			print( '%04d-%02d-%02d %02d:%02d:%02d' % (t[0], t[1], t[2], t[3], t[4], t[5]))
+			print('Pico temperature:', self.TenthsToStr(temp), 'C')
+			micropython.mem_info()
 		return
 
 	# Read the internal temperature
@@ -118,3 +114,15 @@ class PicoLogger():
 				print('Server responss:')
 				print(ans)
 		return
+
+	# Convert a value in "tenths" to a string
+	#
+	def TenthsToStr(self, value):
+		if value < 0:
+			s = '-'
+			value = -value
+		else:
+			s = ''
+		vi = value//10
+		vd = value%10
+		return '%s%d.%d' % (s, vi, vd)
