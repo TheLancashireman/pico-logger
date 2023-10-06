@@ -45,11 +45,18 @@ class PicoLogger():
 	def MainLoop(self):
 		then = time.ticks_ms()
 		while True:
-			self.BlinkerTask()
-			self.NtpTask()
-			self.LogTask()
-			self.InternalTemperatureTask()
-			self.PrintTask()
+			if (self.time_counter % Config.PER_LED) == Config.OFF_LED_ON:
+				self.led.on()
+			if (self.time_counter % Config.PER_LED) == Config.OFF_LED_OFF:
+				self.led.off()
+			if (self.time_counter % Config.PER_NTP) == Config.OFF_NTP:
+				self.NtpTask()
+			if (self.time_counter % Config.PER_TPICO) == Config.OFF_TPICO:
+				self.InternalTemperatureTask()
+			if (self.time_counter % Config.PER_PRINT) == Config.OFF_PRINT:
+				self.PrintTask()
+			if (self.time_counter % Config.PER_POST) == Config.OFF_POST:
+				self.LogTask()
 
 			# This code should give a loop period of 20 ms regardless of how much processing is done
 			# in the loop ... up to a point.
@@ -65,54 +72,40 @@ class PicoLogger():
 				self.time_counter = 0
 		return
 
-	# Blink the LED.
-	#
-	def BlinkerTask(self):
-		t = self.time_counter % Config.PER_LED
-		if t == Config.OFF_LED_ON:
-			self.led.on()
-		elif t == Config.OFF_LED_OFF:
-			self.led.off()
-		return
-
 	# Set the time from an NTP server.
 	#
 	def NtpTask(self):
-		if (self.time_counter % Config.PER_NTP) == Config.OFF_NTP:
-			print('NtpTask')
-			Network.NtpSetTime()
+		print('NtpTask')
+		Network.NtpSetTime()
 		return
 
 	# Print the status
 	#
 	def PrintTask(self):
-		if (self.time_counter % Config.PER_PRINT) == Config.OFF_PRINT:
-			print('PrintTask')
-			t = time.localtime(time.time()+self.tzoffset)
-			temp = Sensors.GetValue('T_pico', 9999)
-			print( '%04d-%02d-%02d %02d:%02d:%02d' % (t[0], t[1], t[2], t[3], t[4], t[5]))
-			print('Pico temperature:', self.TenthsToStr(temp), 'C')
-			micropython.mem_info()
+		print('PrintTask')
+		t = time.localtime(time.time()+self.tzoffset)
+		temp = Sensors.GetValue('T_pico', 9999)
+		print( '%04d-%02d-%02d %02d:%02d:%02d' % (t[0], t[1], t[2], t[3], t[4], t[5]))
+		print('Pico temperature:', self.TenthsToStr(temp), 'C')
+		micropython.mem_info()
 		return
 
 	# Read the internal temperature
 	#
 	def InternalTemperatureTask(self):
-		if (self.time_counter % Config.PER_TPICO) == Config.OFF_TPICO:
-			print('InternalTemperatureTask')
-			Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
+		print('InternalTemperatureTask')
+		Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
 		return
 
 	# Post the status to the remote server
 	#
 	def LogTask(self):
-		if (self.time_counter % Config.PER_POST) == Config.OFF_POST:
-			print('LogTask')
-			t = time.localtime(time.time()+self.tzoffset)
-			ans = Network.PostToServer(t)
-			if ans.strip() != 'OK':
-				print('Server responss:')
-				print(ans)
+		print('LogTask')
+		t = time.localtime(time.time()+self.tzoffset)
+		ans = Network.PostToServer(t)
+		if ans.strip() != 'OK':
+			print('Server responss:')
+			print(ans)
 		return
 
 	# Convert a value in "tenths" to a string
