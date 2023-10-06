@@ -18,23 +18,25 @@
 # along with pico-logger.  If not, see <http://www.gnu.org/licenses/>.
 
 # This is an example. You need to adapt it for your own environment.
+#
 # WARNING: don't upload your adapted version to any public server!
+from micropython import const
 
 class Config():
 	# WiFi credentials
-	WLAN_SSID	= 'ExampleSsid'
-	WLAN_PASSWD	= 'ExampleWifiPassword'
+	WLAN_SSID	= const('ExampleSsid')
+	WLAN_PASSWD	= const('ExampleWifiPassword')
 
 	# NTP information
-	NTP_SERVER	= 'pool.ntp.org'
-	NTP_DELTA	= 2208988800		# NTP time 0 is 1900-01-01. This constant adjusts to a unix time 0 of 1970-01-01
+	NTP_SERVER	= const('pool.ntp.org')
+	NTP_DELTA	= const(2208988800)		# NTP time 0 is 1900-01-01. This constant adjusts to a unix time 0 of 1970-01-01
 
 	# Logger server
-	LOG_SERVER	= 'https://example.com/path/to/wlog.py'
-	LOG_ID		= 'user=EXAMPLE&pass=SECRET&from=pico'
+	LOG_SERVER	= const('https://example.com/path/to/wlog.py')
+	LOG_ID		= const('user=EXAMPLE&pass=SECRET&from=pico')
 
 	# Max age (in seconds) for sensor values
-	SENSOR_AGE	= 300
+	SENSOR_AGE	= const(300)
 
 # Schedule configuration for tasks
 #
@@ -53,9 +55,9 @@ class Config():
 # This means that any other task that has offset 0 could extend the ON time of the LED. This fact is used to
 # indicate network activity.
 
-	PER_LED		= 500		# 10 secs
-	OFF_LED_ON	= 0			# LED ON at 0
-	OFF_LED_OFF	= 1			# LED OFF at 1 (nominally 20 ms after LED_ON)
+	PER_LED		= const(500)		# 10 secs
+	OFF_LED_ON	= const(0)			# LED ON at 0
+	OFF_LED_OFF	= const(1)			# LED OFF at 1 (nominally 20 ms after LED_ON)
 
 # The configuration above gives a system repetition time of 10 seconds. The periods and
 # offsets of the remaining tasks are chosen to fit into this repetition cycle.
@@ -65,18 +67,18 @@ class Config():
 # LED OFF event, so wouldn't affect the LED blink unless its execution time is very long.
 
 # NTP time requests happen at the start of every hour. Its execution time extends the LED ON time.
-	PER_NTP		= 180000	# 60 mins
-	OFF_NTP		= 0			# Start of the hour, during the LED ON period
+	PER_NTP		= const(180000)
+	OFF_NTP		= const(0)
 
 # Server requests happen every 5 minutes, at the beginning of the final 10 second cycle of the minute,
 # so that the request extends the LED blink
-	PER_POST	= 15000
-	OFF_POST	= 14500
+	PER_POST	= const(15000)
+	OFF_POST	= const(14500)
 
-# Read the internal temperatature sensor (T_pico) every minute in cycle 1 after LED OFF
-	PER_TPICO	= 3000
-	OFF_TPICO	= 501
+# Read the internal temperatature sensor (T_pico) every minute in slot 1 after LED OFF
+	PER_TPICO	= const(3000)
+	OFF_TPICO	= const(501)
 
-# Print the status every minute in the second last cycle of the minute, after LED OFF
-	PER_PRINT	= 3000
-	OFF_PRINT	= 2001
+# Print the status every minute in the second last slot of the minute, after LED OFF
+	PER_PRINT	= const(3000)
+	OFF_PRINT	= const(2001)
