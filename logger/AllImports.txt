@@ -4,3 +4,4 @@ import network
 import socket
 import struct
 import urequests
+import micropython
