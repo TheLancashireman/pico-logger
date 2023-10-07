@@ -115,3 +115,12 @@ class Sensors():
 		a = adc.read_u16()
 		t10 = 4372 - a * 292586 // 1000000
 		return t10
+
+	# Process the data received from a serial port
+	#
+	@staticmethod
+	def ProcessSerialData(line):
+		if line == '':
+			return
+		print('Sensors.ProcessSerialData('+line+')')
+		return

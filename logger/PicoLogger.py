@@ -21,7 +21,7 @@ from Config import Config
 from Network import Network
 from Sensors import Sensors
 
-from machine import ADC, Pin, Timer
+from machine import ADC, Pin, Timer, UART
 import time
 import micropython
 
@@ -35,12 +35,16 @@ class PicoLogger():
 		self.led = Pin("LED", Pin.OUT)
 		self.led.off()
 		self.time_counter = 0
+		self.uart =  UART(0, baudrate=9600, bits=8, parity=None, stop=1, tx=None, rx=Pin(17))
+		self.uart_data = bytes()
 		return
 
 	# The main loop. One iteration lasts on average 20 ms. If less, a delay is introduced. If more,
 	# then there is no delay, and the timing of subsequent loops is adjusted to compensate.
 	# A counter is maintained. The counter wraps around every hour. Task timing can use this counter
 	# with a modulo operation.
+	#
+	# SerialDataTask() runs every iteration, but after the LED on/off tasks
 	#
 	def MainLoop(self):
 		then = time.ticks_ms()
@@ -49,6 +53,7 @@ class PicoLogger():
 				self.led.on()
 			if (self.time_counter % Config.PER_LED) == Config.OFF_LED_OFF:
 				self.led.off()
+			self.SerialDataTask()
 			if (self.time_counter % Config.PER_NTP) == Config.OFF_NTP:
 				self.NtpTask()
 			if (self.time_counter % Config.PER_TPICO) == Config.OFF_TPICO:
@@ -95,6 +100,19 @@ class PicoLogger():
 	def InternalTemperatureTask(self):
 		print('InternalTemperatureTask')
 		Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
+		return
+
+	# Read and process data from the serial sensors
+	#
+	def SerialDataTask(self):
+#		print('SerialDataTask')
+		while self.uart.any() > 0:
+			c = self.uart.read(1)
+			if c == b'\r' or c == b'\n':
+				Sensors.ProcessSerialData(self.uart_data.decode('ascii'))
+				self.uart_data = bytes()
+			else:
+				self.uart_data += c
 		return
 
 	# Post the status to the remote server

@@ -1,4 +1,4 @@
-from machine import ADC, Pin, Timer
+from machine import ADC, Pin, Timer, UART
 import time
 import network
 import socket
