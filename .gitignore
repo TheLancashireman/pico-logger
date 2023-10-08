@@ -1,3 +1,5 @@
 logger/Config.py
 logger/tmprun*
-
+server/Config.py
+server/__pycache__/
+server/*.log
