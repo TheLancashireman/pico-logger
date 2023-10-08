@@ -24,6 +24,7 @@ from Sensors import Sensors
 from machine import ADC, Pin, Timer, UART
 import time
 import micropython
+import sys
 
 class PicoLogger():
 	# The constructor connects to the network, gets the time and configures the hardware
@@ -34,12 +35,8 @@ class PicoLogger():
 			try:
 				Network.ConnectToWlan()
 				break
-			except:
-				exc = sys.exception()
-				fexc = traceback.format_exception(exc)
-				for l in fexc:
-					print(l.rstrip())
-				print('')
+			except Exception as e:
+				PicoLogger.PrintTrace(e)
 				time.sleep(20)
 				print('Retrying')
 				
@@ -47,12 +44,8 @@ class PicoLogger():
 			try:
 				Network.NtpSetTime()
 				break
-			except:
-				exc = sys.exception()
-				fexc = traceback.format_exception(exc)
-				for l in fexc:
-					print(l.rstrip())
-				print('')
+			except Exception as e:
+				PicoLogger.PrintTrace(e)
 				time.sleep(20)
 				print('Retrying')
 
@@ -107,8 +100,8 @@ class PicoLogger():
 		print('NtpTask')
 		try:
 			Network.NtpSetTime()
-		except:
-			PicoLogger.PrintTrace()
+		except Exception as e:
+			PicoLogger.PrintTrace(e)
 		return
 
 	# Print the status
@@ -154,8 +147,8 @@ class PicoLogger():
 			if ans.strip() != 'OK':
 				print('Server responss:')
 				print(ans)
-		except:
-			PicoLogger.PrintTrace()
+		except Exception as e:
+			PicoLogger.PrintTrace(e)
 		return
 
 	# Convert a value in "tenths" to a string
@@ -174,9 +167,5 @@ class PicoLogger():
 	# Print an exception stack trace
 	#
 	@staticmethod
-	def PrintTrace():
-		exc = sys.exception()
-		fexc = traceback.format_exception(exc)
-		for l in fexc:
-			print(l.rstrip())
-		print('')
+	def PrintTrace(e):
+		sys.print_exception(e)
