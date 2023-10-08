@@ -26,12 +26,11 @@ import time
 #
 class MinMaxSensor():
 	def __init__(self, curval, minval = None, maxval = None):
-		self.current = curval
-		self.minimum = minval
-		self.maximum = maxval
-		self.timestamp = time.time()
-		self.sum = curval
-		self.count = 1
+		self.sum = 0
+		self.count = 0
+		self.minimum = None
+		self.maximum = None
+		self.NewValue(curval, minval, maxval)
 		return
 
 	def NewValue(self, curval, minval = None, maxval = None):
@@ -49,10 +48,26 @@ class MinMaxSensor():
 			self.maximum = maxval
 		return
 
-	def GetCurrent(self):
-		if (time.time - self.timestamp) > Config.SENSOR_AGE:
-			return None
+	def GetCurrent(self, dflt=None):
+		if (time.time() - self.timestamp) > Config.SENSOR_AGE:
+			return dflt
 		return self.current
+
+	def GetMin(self, dflt=None):
+		if self.minimum == None:
+			return dflt
+		return self.minimum
+
+	def GetMax(self, dflt=None):
+		if self.maximum == None:
+			return dflt
+		return self.maximum
+
+	def GetValueString(self, name, dflt):
+		val = name + '=' + str(self.GetCurrent(dflt))
+		val += ',' + str(self.GetMin(dflt))
+		val += ',' + str(self.GetMax(dflt))
+		return val
 
 	def GetMean(self):
 		return (self.sum + self.count//2) // self.count		# Round to nearest
@@ -81,15 +96,30 @@ class Sensors():
 		return
 
 	# Get the most recent value of a sensor
-	# ToDo: handling of stale values?
 	#
 	@staticmethod
-	def GetValue(name, dflt = None):
+	def GetValue(name, dflt = None, which = '='):
 		try:
 			s = Sensors.sensors[name]
 		except:
 			return dflt
-		return s.current
+		if which == '=':
+			return s.GetCurrent(dflt)
+		if which == '<':
+			return s.GetMin(dflt)
+		if which == '>':
+			return s.GetMax(dflt)
+		return dflt
+
+	# Get a string of the form name=value[,min,max]
+	#
+	@staticmethod
+	def GetValueString(name):
+		try:
+			s = Sensors.sensors[name]
+		except:
+			return(name + '=-')
+		return s.GetValueString(name, '-')
 
 	# Get the values of all sensors as strings
 	# Returns an array of elements of the form 'name=value'
@@ -98,8 +128,8 @@ class Sensors():
 	def GetAllValues():
 		l = []
 		for name in Sensors.sensors:
-			v = Sensors.GetValue(name)
-			l.append(name+'='+str(v))
+			s = Sensors.GetValueString(name)
+			l.append(s)
 		return l
 
 	# Read the internal temperature sensor and return the value in tenths of a degree C
