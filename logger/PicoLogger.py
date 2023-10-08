@@ -30,8 +30,32 @@ class PicoLogger():
 	#
 	def __init__(self):
 		self.tzoffset = 7200
-		Network.ConnectToWlan()
-		Network.NtpSetTime()
+		while True:
+			try:
+				Network.ConnectToWlan()
+				break
+			except:
+				exc = sys.exception()
+				fexc = traceback.format_exception(exc)
+				for l in fexc:
+					print(l.rstrip())
+				print('')
+				time.sleep(20)
+				print('Retrying')
+				
+		while True:
+			try:
+				Network.NtpSetTime()
+				break
+			except:
+				exc = sys.exception()
+				fexc = traceback.format_exception(exc)
+				for l in fexc:
+					print(l.rstrip())
+				print('')
+				time.sleep(20)
+				print('Retrying')
+
 		self.led = Pin("LED", Pin.OUT)
 		self.led.off()
 		self.time_counter = 0
@@ -60,6 +84,7 @@ class PicoLogger():
 				self.InternalTemperatureTask()
 			if (self.time_counter % Config.PER_PRINT) == Config.OFF_PRINT:
 				self.PrintTask()
+				self.LogTask()		# Testing
 			if (self.time_counter % Config.PER_POST) == Config.OFF_POST:
 				self.LogTask()
 
@@ -81,7 +106,10 @@ class PicoLogger():
 	#
 	def NtpTask(self):
 		print('NtpTask')
-		Network.NtpSetTime()
+		try:
+			Network.NtpSetTime()
+		except:
+			PicoLogger.PrintTrace()
 		return
 
 	# Print the status
@@ -91,9 +119,9 @@ class PicoLogger():
 		t = time.localtime(time.time()+self.tzoffset)
 		print( '%04d-%02d-%02d %02d:%02d:%02d' % (t[0], t[1], t[2], t[3], t[4], t[5]))
 		temp = Sensors.GetValue('T_pico', 9999)
-		print('Pico temperature:', self.TenthsToStr(temp), 'C')
+		print('Pico temperature:', PicoLogger.TenthsToStr(temp), 'C')
 		temp = Sensors.GetValue('T01', 9999)
-		print('Indoor temperature:', self.TenthsToStr(temp), 'C')
+		print('Indoor temperature:', PicoLogger.TenthsToStr(temp), 'C')
 		micropython.mem_info()
 		return
 
@@ -121,16 +149,20 @@ class PicoLogger():
 	#
 	def LogTask(self):
 		print('LogTask')
-		t = time.localtime(time.time()+self.tzoffset)
-		ans = Network.PostToServer(t)
-		if ans.strip() != 'OK':
-			print('Server responss:')
-			print(ans)
+		try:
+			t = time.localtime(time.time()+self.tzoffset)
+			ans = Network.PostToServer(t)
+			if ans.strip() != 'OK':
+				print('Server responss:')
+				print(ans)
+		except:
+			PicoLogger.PrintTrace()
 		return
 
 	# Convert a value in "tenths" to a string
 	#
-	def TenthsToStr(self, value):
+	@staticmethod
+	def TenthsToStr(value):
 		if value < 0:
 			s = '-'
 			value = -value
@@ -139,3 +171,13 @@ class PicoLogger():
 		vi = value//10
 		vd = value%10
 		return '%s%d.%d' % (s, vi, vd)
+
+	# Print an exception stack trace
+	#
+	@staticmethod
+	def PrintTrace():
+		exc = sys.exception()
+		fexc = traceback.format_exception(exc)
+		for l in fexc:
+			print(l.rstrip())
+		print('')
