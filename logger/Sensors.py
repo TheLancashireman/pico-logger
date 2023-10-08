@@ -24,19 +24,29 @@ import time
 
 # A single sensor value along with timestamp (for age) and mean value calculation
 #
-class Sensor():
-	def __init__(self, current):
-		self.current = current
+class MinMaxSensor():
+	def __init__(self, curval, minval = None, maxval = None):
+		self.current = curval
+		self.minimum = minval
+		self.maximum = maxval
 		self.timestamp = time.time()
-		self.sum = current
+		self.sum = curval
 		self.count = 1
 		return
 
-	def NewValue(self, current):
-		self.current = current
+	def NewValue(self, curval, minval = None, maxval = None):
+		self.current = curval
 		self.timestamp = time.time()
-		self.sum += current
+		self.sum += curval
 		self.count += 1
+		if minval == None:
+			minval = curval
+		if self.minimum == None or self.minimum > minval:
+			self.minimum = minval
+		if maxval == None:
+			maxval = curval
+		if self.maximum == None or self.maximum < maxval:
+			self.maximum = maxval
 		return
 
 	def GetCurrent(self):
@@ -60,11 +70,11 @@ class Sensors():
 	# Log a single measured value. Create a sensor instance if not already present
 	#
 	@staticmethod
-	def LogValue(name, value):
+	def LogMinMaxValue(name, value, minval = None, maxval = None):
 		try:
 			s = Sensors.sensors[name]
 		except:
-			s = Sensor(value)
+			s = MinMaxSensor(value, minval, maxval)
 			Sensors.sensors[name] = s
 			return
 		s.NewValue(value)
@@ -123,4 +133,49 @@ class Sensors():
 		if line == '':
 			return
 		print('Sensors.ProcessSerialData('+line+')')
+		if line[0] == 'T':
+			Sensors.ProcessTSensorLine(line)
+		else:
+			print('Unrecognised sensor type:', line)
 		return
+
+	# Process data from a T sensor
+	# Line is of form Tnn ccc mmm MMM xx...
+	#
+	#	Tnn is the sensor id
+	#	ccc is the current value in hexadecimal
+	#	mmm is the minumum value in hexadecimal
+	#	MMM is the maximum value in hexadecimal
+	#
+	@staticmethod
+	def ProcessTSensorLine(line):
+		if len(line) < 15:
+			print('Line too short:', line)
+			return
+
+		parts = line[0:15].split(' ')
+		if len(parts) != 4:
+			print('Wrong format:', line)
+			return
+
+		try:
+			Tcur = Sensors.HexToTenths(parts[1])
+			Tmin = Sensors.HexToTenths(parts[2])
+			Tmax = Sensors.HexToTenths(parts[3])
+		except:
+			print('Wrong format:', line)
+			return
+
+		Sensors.LogMinMaxValue(parts[0], Tcur, Tmin, Tmax)
+			
+		return
+
+	# Convert fixed-point hexadecimal value to tenths
+	#
+	@staticmethod
+	def HexToTenths(hex):
+		val = int(hex, 16)
+		if val > 0x7ff:
+			val -= 0x1000
+		val = val * 10 // 16
+		return val

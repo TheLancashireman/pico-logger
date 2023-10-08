@@ -89,9 +89,11 @@ class PicoLogger():
 	def PrintTask(self):
 		print('PrintTask')
 		t = time.localtime(time.time()+self.tzoffset)
-		temp = Sensors.GetValue('T_pico', 9999)
 		print( '%04d-%02d-%02d %02d:%02d:%02d' % (t[0], t[1], t[2], t[3], t[4], t[5]))
+		temp = Sensors.GetValue('T_pico', 9999)
 		print('Pico temperature:', self.TenthsToStr(temp), 'C')
+		temp = Sensors.GetValue('T01', 9999)
+		print('Indoor temperature:', self.TenthsToStr(temp), 'C')
 		micropython.mem_info()
 		return
 
@@ -99,7 +101,7 @@ class PicoLogger():
 	#
 	def InternalTemperatureTask(self):
 		print('InternalTemperatureTask')
-		Sensors.LogValue('T_pico', Sensors.ReadInternalTemperature())
+		Sensors.LogMinMaxValue('T_pico', Sensors.ReadInternalTemperature())
 		return
 
 	# Read and process data from the serial sensors
