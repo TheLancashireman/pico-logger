@@ -2,11 +2,12 @@
 #
 # wlog.py - weather logger, incoming data
 #
-# (c) 2023 David Haworth
+# (c) David Haworth
 
 import os
 import sys
 import traceback
+from Config import Config
 
 # Input is a string containing a compressed date or time, e.g. YYYYMMDD or hhmmss
 # Output is [YYYY, MM, DD] or [hh, mm, ss] (all as integers)
@@ -21,31 +22,52 @@ def DateTimeSplit(dt):
 	dt[0] = x
 	return dt
 
-# Raise a ValueError if any of the data is crap
+# Print an error message
+#
+def Error(str):
+	print('Error:', str)
+	return False
+
+# Report an error if any of the data is crap
 #
 maxdays = [ 29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ]
 def SanityCheck(params):
-	v = params['date']
+	try:
+		v = params['date']
+	except:
+		return Error('date parameter not present.')
+
 	ymd = DateTimeSplit(v)
 	if ymd[0] < 2000:
-		raise ValueError('year not plausible.')
+		return Error('year not plausible.')
 	if ymd[1] < 1 or ymd[1] > 12:
-		raise ValueError('month not plausible.')
+		return Error('month not plausible.')
 	maxindex = ymd[1]
 	if ( ((ymd[0] % 4) == 0) and ((ymd[0] % 100) != 0) ) or ((ymd[0] % 400) == 0):
 		maxindex = 0	# Divides by 4 but not by 100 ==> leap year
 	if ymd[2] < 1 or ymd[2] > maxdays[maxindex]:
-		raise ValueError('day of month not plausible.')
+		return Error('day of month not plausible.')
 
-	v = params['time']
+	try:
+		v = params['time']
+	except:
+		return Error('time parameter not present.')
+
 	ymd = DateTimeSplit(v)
 	if ymd[0] < 0 or ymd[0] > 23:
-		print('Hour:', ymd[0])
-		raise ValueError('hour not plausible.')
+		return Error('hour not plausible.')
 	if ymd[1] < 0 or ymd[1] > 59:
-		raise ValueError('minute not plausible.')
+		return Error('minute not plausible.')
 	if ymd[2] < 0 or ymd[2] > 59:
-		raise ValueError('second not plausible.')
+		return Error('second not plausible.')
+
+	try:
+		u = params['user']
+		p = params['pass']
+		if Config.passwords[u] != p:
+			return Error('username/password mismatch.')
+	except:
+		return Error('username/password mismatch.')
 
 	return True
 
@@ -56,22 +78,29 @@ def SanityCheck(params):
 def ProcessQuery(q):
 	pairs = q.split('&')	# An array of key=value strings
 
-	if len(pairs) < 3:
-		print('Error! QUERY_STRING contains fewer than three parameters')
-		return False
+	if len(pairs) < 5:
+		return Error('QUERY_STRING contains fewer than five parameters.')
 
 	params = {}
 
 	for kv in pairs:
 		k_v = kv.split('=', 1)	# Might be an = in the value (unlikely)
 		if len(k_v) != 2:
-			print('Error! parameter "'+kv+' has no value')
-			return False
+			return Error('parameter "'+kv+' has no value.')
 		params[k_v[0]] = k_v[1]
 
 	if SanityCheck(params):
-		f = open('log-'+params['date']+'.log', 'a')
-		f.write(q+'\n')
+		# Ensure date and time are at the beginning of the line
+		parts = [ 'date=' + params['date'], 'time=' + params['time'] ]
+		# Append all parameters except date, time, user and pass
+		for v in params:
+			if v not in [ 'date', 'time', 'user', 'pass' ]:
+				parts.append( v + '=' + params[v] )
+		# Open the file and write the parts joined with '&'
+		fname = params['user'] + '-' + params['date'] + '.log'
+		f = open(fname, 'a')
+		line = '&'.join(parts)
+		f.write(line+'\n')
 		f.close()
 
 	return True
@@ -82,23 +111,19 @@ def ProcessQuery(q):
 def Logger():
 	q = os.environ.get('QUERY_STRING')
 	if q == None:
-		print('Error! QUERY_STRING not set')
-		return
-#	print('QUERY_STRING =', q)	# Debug
+		return Error('QUERY_STRING not set')
 
 	if len(q) < len('date=20230916&time=222900&x=y'):	# Minimal log data
-		print('Error! QUERY_STRING too short')
-		return
+		return Error('QUERY_STRING too short')
 
-	if len(q) > 256:									# Should be enough for anyone ;-)
-		print('Error! QUERY_STRING too long')
-		return
+	if len(q) > 1000:									# Should be enough for anyone ;-)
+		return Error('QUERY_STRING too long')
 
-	if ProcessQuery(q):
-		print('OK')
-	else:
-		print('QUERY_STRING =', q)
-	return
+	if not ProcessQuery(q):
+		print('QUERY_STRING = ' + q)
+		return False
+
+	return True
 
 # Do the job ...
 #
@@ -106,13 +131,18 @@ print('Content-type: text/plain')
 print('')
 
 try:
-	Logger()
+	if Logger():
+		print('OK')
 except:
+	print('Sorry; an exception occurred.')
+	print('QUERY_STRING', os.environ.get('QUERY_STRING'))
+
+	# For some reason, getting the exception type on my web host fails silently.
+	# This is for local debugging
 	exc = sys.exception()
 	fexc = traceback.format_exception(exc)
-	print('QUERY_STRING', os.environ.get('QUERY_STRING'))
 	for l in fexc:
-		print(l)
+		print(l.rstrip())
 	print('')
 
 exit(0)
