@@ -67,6 +67,8 @@ class Network():
 		urlstr = '?'.join([Config.LOG_SERVER, Config.LOG_ID])
 		datestr = 'date=%04d%02d%02d' % (t[0], t[1], t[2])
 		timestr = 'time=%02d%02d%02d' % (t[3], t[4], t[5])
+		vals = Sensors.GetAllValues()
+		req = '&'.join([urlstr, datestr, timestr] + vals)
 		response = urequests.get('&'.join([urlstr, datestr, timestr] + Sensors.GetAllValues()))
 		x = response.text
 		response.close()
