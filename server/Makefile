@@ -24,6 +24,7 @@ SERVER_DIR = /data2/mirror/experimental.thelancashireman.org/weather
 SERVER_FILES += $(SERVER_DIR)/index.html
 SERVER_FILES += $(SERVER_DIR)/wlog.py
 SERVER_FILES += $(SERVER_DIR)/weather.py
+SERVER_FILES += $(SERVER_DIR)/Config.py
 
 install:	$(SERVER_FILES)
 
