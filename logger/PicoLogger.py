@@ -84,7 +84,6 @@ class PicoLogger():
 				self.InternalTemperatureTask()
 			if (self.time_counter % Config.PER_PRINT) == Config.OFF_PRINT:
 				self.PrintTask()
-				self.LogTask()		# Testing
 			if (self.time_counter % Config.PER_POST) == Config.OFF_POST:
 				self.LogTask()
 
