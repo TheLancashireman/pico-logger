@@ -30,7 +30,7 @@ class PicoLogger():
 	# The constructor connects to the network, gets the time and configures the hardware
 	#
 	def __init__(self):
-		self.tzoffset = 7200
+		self.tzoffset = 0
 		while True:
 			try:
 				Network.ConnectToWlan()
