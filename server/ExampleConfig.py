@@ -23,13 +23,27 @@
 # Edit the file to suit.
 
 class Config():
-	title = 'Weather report'
-	# Username/password pairs
+
+	# Page title for text/html report
+	#
+	title = 'This is not a title'
+
+	# Username/password pairs.
+	# ToDo: use hashes
+	#
 	passwords = {
 		'me':	'1234',
 		'you':	'9876'
 	}
+
+	# List of sensors mapping ID in log to human-readable name
+	# Note: sensors not in this dictionary are ignored
+	#
 	sensornames = {
 		'T00':		'Outdoors',
 		'T01':		'Indoors'
 	}
+
+	# Options
+	#
+	opt_UseMinMax = True

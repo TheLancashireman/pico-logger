@@ -45,12 +45,20 @@ class Sensor():
 		if self.curtime == None or self.curtime < new.curtime:
 			self.curtime = new.curtime
 			self.curval = new.curval
-		if new.minval != None:
-			if self.minval == None or self.minval > new.minval:
-				self.minval = new.minval
-		if new.maxval != None:
-			if self.maxval == None or self.maxval < new.maxval:
-				self.maxval = new.maxval
+
+		if Config.opt_UseMinMax:
+			if new.minval != None:
+				if self.minval == None or self.minval > new.minval:
+					self.minval = new.minval
+			if new.maxval != None:
+				if self.maxval == None or self.maxval < new.maxval:
+					self.maxval = new.maxval
+		else:
+			if self.curval != None:
+				if self.minval == None or self.minval > self.curval:
+					self.minval = self.curval
+				if self.maxval == None or self.maxval < self.curval:
+					self.maxval = self.curval
 		return
 
 
@@ -300,3 +308,5 @@ class Analyser():
 			stats.PrintMinMax()
 		print()
 		return
+
+	
