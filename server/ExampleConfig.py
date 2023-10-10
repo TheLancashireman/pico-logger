@@ -17,15 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with pico-logger.  If not, see <http://www.gnu.org/licenses/>.
 
-# Example configuration file for wlog.
+# Example configuration file for wlog etc.
+# Copy this file to a subdirectory called py. Rename it to Config.py.
+# Add access protection to py/ using .htaccess
+# Edit the file to suit.
 
 class Config():
+	title = 'Weather report'
 	# Username/password pairs
 	passwords = {
 		'me':	'1234',
 		'you':	'9876'
 	}
 	sensornames = {
-		'T00':		'Outdoor temperature',
-		'T01':		'Indoor temprature'
+		'T00':		'Outdoors',
+		'T01':		'Indoors'
 	}
