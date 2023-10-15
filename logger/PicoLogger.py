@@ -131,7 +131,10 @@ class PicoLogger():
 		while self.uart.any() > 0:
 			c = self.uart.read(1)
 			if c == b'\r' or c == b'\n':
-				Sensors.ProcessSerialData(self.uart_data.decode('ascii'))
+				try:
+					Sensors.ProcessSerialData(self.uart_data.decode('ascii'))
+				except:
+					pass
 				self.uart_data = bytes()
 			else:
 				self.uart_data += c
