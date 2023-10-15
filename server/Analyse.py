@@ -39,7 +39,7 @@ class Sensor():
 		self.maxval = None
 		return
 
-	# Update the stored sensor values from a temporary Sensor object
+	# Update the stored sensor values from another (temporary) Sensor object
 	#
 	def Update(self, new):
 		if self.curtime == None or self.curtime < new.curtime:
@@ -47,6 +47,8 @@ class Sensor():
 			self.curval = new.curval
 
 		if Config.opt_UseMinMax:
+			# Use the min/max values from the sensor
+			# This might produce strange results unless the sensor gets reset regularly
 			if new.minval != None:
 				if self.minval == None or self.minval > new.minval:
 					self.minval = new.minval
@@ -54,6 +56,8 @@ class Sensor():
 				if self.maxval == None or self.maxval < new.maxval:
 					self.maxval = new.maxval
 		else:
+			# Compute min/max from the current value
+			# This gives better results but might miss short-lived peaks
 			if self.curval != None:
 				if self.minval == None or self.minval > self.curval:
 					self.minval = self.curval
@@ -70,6 +74,8 @@ class Statistics():
 		self.period = per		# h (hourly)		d (daily)		m (monthly)
 		self.timedate = td		# YYYY-MM-DD HH		YYYY-MM-DD		YYYY-MM
 		self.sensors = {}
+
+		# Populate the sensors dictionary
 		for s in Config.sensornames:
 			self.sensors[s] = Sensor(s)
 		return
@@ -82,7 +88,7 @@ class Statistics():
 				self.sensors[s].Update(sensor)
 				return
 
-	# Print a line of current values
+	# Print a line of headers
 	#
 	def PrintHeaders(self):
 		if self.period == 'h':
@@ -180,7 +186,7 @@ class Analyser():
 
 	# Read all the log files
 	#
-	# To do: ignore files that are older than 13 months.
+	# To do: ignore files that are older than 13 months, for efficiency
 	#
 	def ReadLogs(self):
 		# Find list of files matching pattern dh-YYYYMMDD.log
@@ -262,12 +268,16 @@ class Analyser():
 				monthly.Update(s)
 		return
 
+	# Find the stats object for a given date. The list is passed as a parameter
+	#
 	def FindStats(self, stats, td):
 		for s in stats:
 			if s.timedate == td:
 				return s
 		return None
 
+	# Convert a string to an integer.
+	# Return None if string is not valid
 	def StrToInt(self, valstr):
 		try:
 			v = int(valstr)
@@ -275,6 +285,8 @@ class Analyser():
 			v = None
 		return v
 
+	# Print all the statistics as plain text
+	#
 	def PrintStats(self):
 		print(Config.title)
 		print('All times are UTC')
@@ -309,4 +321,40 @@ class Analyser():
 		print()
 		return
 
-	
+	# Print all the statistics as HTML
+	# ToDo: WORKING HERE
+	#
+	def HtmlStats(self):
+		print('<h1>' + Config.title +Â'</h1>')
+		print('<p>All times are UTC</p>')
+		print()
+		gmt = time.gmtime(self.now)
+		utc = (gmt.tm_year, gmt.tm_mon, gmt.tm_mday, gmt.tm_hour, gmt.tm_min)
+		print('<p>Current time: %04d-%02d-%02d %02d:%02d</p>' % utc)
+		print()
+		self.hourly[0].PrintHeaders()
+		print('Current')
+		self.hourly[0].PrintCurrent()
+		print('Hour')
+		self.hourly[0].PrintMinMax()
+		print('Last 24 hours')
+		for stats in self.hourly[1:]:
+			stats.PrintMinMax()
+		print()
+
+		self.daily[0].PrintHeaders()
+		print('Today')
+		self.daily[0].PrintMinMax()
+		print('Last 7 days')
+		for stats in self.daily[1:]:
+			stats.PrintMinMax()
+		print()
+		self.monthly[0].PrintHeaders()
+		print('This month')
+		self.monthly[0].PrintMinMax()
+		print('Last 12 months')
+		for stats in self.monthly[1:]:
+			stats.PrintMinMax()
+		print()
+		return
+
