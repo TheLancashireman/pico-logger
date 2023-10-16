@@ -19,7 +19,7 @@
 
 from Config import Config
 
-from machine import ADC, Pin
+import machine
 import time
 
 # A single sensor value along with timestamp (for age) and mean value calculation

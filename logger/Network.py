@@ -18,7 +18,9 @@
 # along with pico-logger.  If not, see <http://www.gnu.org/licenses/>.
 
 from Config import Config
+from Sensors import Sensors
 
+import machine
 import time
 import network
 import socket
