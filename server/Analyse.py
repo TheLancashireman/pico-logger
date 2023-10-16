@@ -289,12 +289,15 @@ class Analyser():
 	#
 	def PrintStats(self):
 		print(Config.title)
-		print('All times are UTC')
 		print()
 		gmt = time.gmtime(self.now)
 		utc = (gmt.tm_year, gmt.tm_mon, gmt.tm_mday, gmt.tm_hour, gmt.tm_min)
-		print('Current time: %04d-%02d-%02d %02d:%02d' % utc)
+		print('Current time (UTC): %04d-%02d-%02d %02d:%02d' % utc)
+		loc = time.localtime(self.now)
+		tim = (loc.tm_year, loc.tm_mon, loc.tm_mday, loc.tm_hour, loc.tm_min)
+		print('Server local time : %04d-%02d-%02d %02d:%02d' % tim)
 		print()
+		print('All times below are UTC')
 		self.hourly[0].PrintHeaders()
 		print('Current')
 		self.hourly[0].PrintCurrent()
@@ -325,7 +328,7 @@ class Analyser():
 	# ToDo: WORKING HERE
 	#
 	def HtmlStats(self):
-		print('<h1>' + Config.title +Â'</h1>')
+		print('<h1>' + Config.title + '</h1>')
 		print('<p>All times are UTC</p>')
 		print()
 		gmt = time.gmtime(self.now)
